@@ -21,7 +21,9 @@ var server = net.createServer(function(socket) {
     if (idx != -1) clients.splice(idx, 1);
     console.log("aus und vorbei....");
   })
-}).listen(8124, "localhost");
+});
+
+server.listen(8142);
 
 console.log("server started...accept conections");
 
@@ -56,6 +58,6 @@ function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
   console.log(clientUpdate);
   jquery.each(clients, function(index, socket) {
-    socket.write(JSON.stringify(clientUpdate));
+    socket.write(JSON.stringify(clientUpdate) + "\n");
   });
 }
