@@ -10,6 +10,7 @@ trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": 
 
 var server = net.createServer(function(socket) {
   console.log("hossa");
+  socket.setNoDelay(true);
   clients.push(socket);
   socket.on('connect', function() {
     for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
