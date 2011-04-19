@@ -4,6 +4,9 @@ var net = require('net'),
     log4js = require('log4js')(),
     logger = log4js.getLogger("ifm");
 
+global.PORT = 8142;
+global.POLL_INTERVAL = 20000;
+
 var NUMBER_OF_CHANNELS = 3;
 var clients = [];
 var empty = { "path": "", "track": "", "label": ""};
@@ -11,8 +14,8 @@ var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
 
 var server = net.createServer(function(socket) {
-  socket.setNoDelay(true);
   clients.push(socket);
+  socket.setNoDelay(true);
   logger.info('client opened connection. ' + clients.length + ' connections open');
   socket.on('connect', function() {
     for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
@@ -23,10 +26,10 @@ var server = net.createServer(function(socket) {
     var idx = clients.indexOf(socket);
     if (idx != -1) clients.splice(idx, 1);
     logger.info('client closed connection. ' + clients.length + ' connections open');
-  })
+  });
 });
 
-server.listen(8142);
+server.listen(PORT);
 
 console.log("server started...accept conections");
 
@@ -55,7 +58,7 @@ setInterval(function() {
       }
     });
   }
-}, 10000);
+}, POLL_INTERVAL);
 
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
