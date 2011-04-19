@@ -1,0 +1,18 @@
+{
+  "appenders": [
+    { 
+      "category": "ifm", 
+      "type": "file", 
+      "filename": "ifm.log"
+    },
+    { 
+      "category": "ifmconsole", 
+      "type": "console"
+    }
+  ],
+  
+  "levels": {
+    "ifm":  "DEBUG"
+  }
+}
+

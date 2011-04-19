@@ -1,6 +1,8 @@
 var net = require('net'),
     https = require('https'),
     jquery = require('jquery');
+    log4js = require('log4js')(),
+    logger = log4js.getLogger("ifm");
 
 var NUMBER_OF_CHANNELS = 3;
 var clients = [];
@@ -9,9 +11,9 @@ var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
 
 var server = net.createServer(function(socket) {
-  console.log("hossa");
   socket.setNoDelay(true);
   clients.push(socket);
+  logger.info('client opened connection. ' + clients.length + ' connections open');
   socket.on('connect', function() {
     for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
       pushToClients(i, trackInfos[i]);
@@ -20,7 +22,7 @@ var server = net.createServer(function(socket) {
   socket.once('end', function() {
     var idx = clients.indexOf(socket);
     if (idx != -1) clients.splice(idx, 1);
-    console.log("aus und vorbei....");
+    logger.info('client closed connection. ' + clients.length + ' connections open');
   })
 });
 
@@ -58,6 +60,7 @@ setInterval(function() {
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
   console.log(clientUpdate);
+  console.log("len: " + JSON.stringify(clientUpdate).length)
   jquery.each(clients, function(index, socket) {
     socket.write(JSON.stringify(clientUpdate) + "\n");
   });
