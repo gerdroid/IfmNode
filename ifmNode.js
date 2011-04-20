@@ -3,21 +3,29 @@ var net = require('net'),
     jquery = require('jquery');
     log4js = require('log4js')(),
     logger = log4js.getLogger("ifm");
+    http = require('http');
 
+global.WEB = 8080;
 global.PORT = 8142;
 global.POLL_INTERVAL = 20000;
 
 var NUMBER_OF_CHANNELS = 3;
+var clientNumber = 0;
 var clients = [];
 var empty = { "path": "", "track": "", "label": ""};
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
 
 var server = net.createServer(function(socket) {
-  clients.push(socket);
   socket.setNoDelay(true);
-  logger.info('client opened connection. ' + clients.length + ' connections open');
+  setupClient(socket, clientNumber);
+  clientNumber++;
+});
+
+function setupClient(socket, number) {
   socket.on('connect', function() {
+    clients.push(socket);
+    logger.info('client ' + number + ', opened connection. ' + clients.length + ' connections open.');
     for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
       pushToClients(i, trackInfos[i]);
     }
@@ -25,13 +33,12 @@ var server = net.createServer(function(socket) {
   socket.once('end', function() {
     var idx = clients.indexOf(socket);
     if (idx != -1) clients.splice(idx, 1);
-    logger.info('client closed connection. ' + clients.length + ' connections open');
+    logger.info('client ' + number + ', closed connection. ' + clients.length + ' connections open.');
   });
-});
+}
 
 server.listen(PORT);
-
-console.log("server started...accept conections");
+logger.info("server started...accept conections");
 
 function queryIfm(channel, callback) {
   https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
@@ -44,7 +51,7 @@ function queryIfm(channel, callback) {
       callback(channel, info);
     });
   }).on('error', function(e) {
-    console.log("Got error: " + e.message);
+    logger.error(e.message);
   });
 }
 
@@ -54,7 +61,6 @@ setInterval(function() {
       if (info.track != trackInfos[index].track) {
         pushToClients(index, info);
         trackInfos[index] = info;
-        //console.log(JSON.stringify(info));
       }
     });
   }
@@ -62,9 +68,13 @@ setInterval(function() {
 
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
-  console.log(clientUpdate);
-  console.log("len: " + JSON.stringify(clientUpdate).length)
   jquery.each(clients, function(index, socket) {
     socket.write(JSON.stringify(clientUpdate) + "\n");
   });
 }
+
+http.createServer(function (req, res) {
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('open connections: ' + clients.length);
+}).listen(WEB);
+
