@@ -13,7 +13,6 @@ global.MAX_BUFFER_SIZE = 1024;
 var NUMBER_OF_CHANNELS = 3;
 var clientNumber = 0;
 var clients = [];
-var empty = { "path": "", "track": "", "label": ""};
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
 
@@ -70,7 +69,7 @@ setInterval(function() {
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
   jquery.each(clients, function(index, socket) {
-    if (socket.bufferSize > MAX_BUFFER_SIZE) {
+   if (socket.bufferSize > MAX_BUFFER_SIZE) {
       logger.info("closing socket to dead client");
       socket.end();
     } else {
@@ -81,6 +80,10 @@ function pushToClients(channelIndex, info) {
 
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('open connections: ' + clients.length);
+  var text = "open connections: " + clients.length + "/n/n";
+  jquery.each(clients, function(index, socket) {
+    text = text + "ip: " + socket.remoteAddress + "/n";
+  }
+  res.end(text);
 }).listen(WEB);
 
