@@ -70,7 +70,12 @@ setInterval(function() {
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
   jquery.each(clients, function(index, socket) {
-    socket.write(JSON.stringify(clientUpdate) + "\n");
+    if (socket.bufferSize > MAX_BUFFER_SIZE) {
+      logger.info("closing socket to dead client");
+      socket.end();
+    } else {
+      socket.write(JSON.stringify(clientUpdate) + "\n");
+    }
   });
 }
 
