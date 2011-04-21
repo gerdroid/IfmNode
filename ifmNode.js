@@ -8,6 +8,7 @@ var net = require('net'),
 global.WEB = 8080;
 global.PORT = 8142;
 global.POLL_INTERVAL = 20000;
+global.MAX_BUFFER_SIZE = 1024;
 
 var NUMBER_OF_CHANNELS = 3;
 var clientNumber = 0;
