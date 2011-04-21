@@ -35,6 +35,11 @@ function setupClient(socket, number) {
     if (idx != -1) clients.splice(idx, 1);
     logger.info('client ' + number + ', closed connection. ' + clients.length + ' connections open.');
   });
+  socket.once('error', function() {
+    var idx = clients.indexOf(socket);
+    if (idx != -1) clients.splice(idx, 1);
+    logger.info('client ' + number + ', connection was aborted. ' + clients.length + ' connections open.');
+  });
 }
 
 server.listen(PORT);
