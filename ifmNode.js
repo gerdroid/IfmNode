@@ -80,10 +80,10 @@ function pushToClients(channelIndex, info) {
 
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  var text = "open connections: " + clients.length + "/n/n";
+  var text = "open connections: " + clients.length + "\n\n";
   jquery.each(clients, function(index, socket) {
-    text = text + "ip: " + socket.remoteAddress + "/n";
-  }
+    text = text + index + ": " + socket.remoteAddress + "\n";
+  });
   res.end(text);
 }).listen(WEB);
 
