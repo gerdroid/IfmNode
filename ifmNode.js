@@ -25,7 +25,7 @@ var server = net.createServer(function(socket) {
 function setupClient(socket, number) {
   socket.on('connect', function() {
     clients.push(socket);
-    logger.info('client ' + number + ', opened connection. ' + clients.length + ' connections open.');
+    logger.info('client ' + number + ', opened connection. ' + clients.length + ' connections open');
     for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
       pushToClients(i, trackInfos[i]);
     }
@@ -33,12 +33,12 @@ function setupClient(socket, number) {
   socket.once('end', function() {
     var idx = clients.indexOf(socket);
     if (idx != -1) clients.splice(idx, 1);
-    logger.info('client ' + number + ', closed connection. ' + clients.length + ' connections open.');
+    logger.info('client ' + number + ', closed connection. ' + clients.length + ' connections open');
   });
   socket.once('error', function() {
     var idx = clients.indexOf(socket);
     if (idx != -1) clients.splice(idx, 1);
-    logger.info('client ' + number + ', connection was aborted. ' + clients.length + ' connections open.');
+    logger.info('client ' + number + ', aborted connection. ' + clients.length + ' connections open');
   });
 }
 
