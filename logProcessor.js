@@ -40,7 +40,8 @@ var processLog = function(logFile, callback) {
 var logProcessor = {
   sum: 0,
   process: function(start, end) {
-    var duration = (end.date - start.date) / 1000;
+    // duration in minutes
+    var duration = (end.date - start.date) / 60000;
     this.sum += duration;
   },
 
