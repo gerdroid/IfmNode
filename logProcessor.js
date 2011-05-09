@@ -37,7 +37,7 @@ var processLog = function(logFile, callback) {
       });
 }
 
-var logProcessor = {
+var totalTime = {
   sum: 0,
   process: function(start, end) {
     // duration in minutes
@@ -50,5 +50,32 @@ var logProcessor = {
   }
 };
 
-processLog('ifm.log', logProcessor);
+var totalConnections = {
+  sum: 0,
+  process: function(start, end) {
+    var h = start.date.getHours();
+    console.log(h);
+    this.sum++;
+  },
+
+  end: function() {
+    console.log(this.sum);
+  }
+};
+
+var connectionsPerHour = {
+  sum: 0,
+  process: function(start, end) {
+    var h = start.date.getHours();
+    console.log(h);
+    this.sum++;
+  },
+
+  end: function() {
+    console.log(this.sum);
+  }
+};
+
+processLog('ifm.log', totalTime);
+processLog('ifm.log', totalConnections);
 
