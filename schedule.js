@@ -5,7 +5,7 @@ var https = require('https'),
 global.POLL_INTERVAL = 1000 * 60 * 30;
 var schedule = [];
 
-function queryIfmSchedule() {
+var queryIfmSchedule = function() {
   var buf = "";
   https.get({ host: 'intergalactic.fm', path: '/'}, function(res) {
     res.setEncoding('utf8');
@@ -16,6 +16,8 @@ function queryIfmSchedule() {
       var eventList = schedule(buf)[1];
       extractEvents(eventList);
     });
+  }).on('error', function() {
+      console.log('could not reach IFM');
   });
 }
 
@@ -30,7 +32,6 @@ function extractEvents(list) {
     allEvents.push({'title': extractTitle(e), 'date': extractDate(e)})
   }
   schedule = allEvents;
-  console.log(allEvents);
 }
 
 function extractTitle(event) {
@@ -53,5 +54,5 @@ setInterval(function() {
 
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end(JSON.stringify(schedule));
+  res.end(JSON.stringify(schedule) + "\n");
 }).listen(8081);
