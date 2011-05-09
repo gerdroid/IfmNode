@@ -1,9 +1,12 @@
 var https = require('https'),
     http = require('http'),
+    log4js = require('log4js')(),
+    logger = log4js.getLogger("ifm"),
     jquery = require('jquery');
 
 global.POLL_INTERVAL = 1000 * 60 * 30;
-var schedule = [];
+
+exports.schedule = [];
 
 var queryIfmSchedule = function() {
   var buf = "";
@@ -27,11 +30,9 @@ function extractEvents(list) {
   var event;
   while (event = r.exec(list)) {
     var e = jquery.trim(event[1]);
-    extractTitle(e);
-    extractDate(e);
     allEvents.push({'title': extractTitle(e), 'date': extractDate(e)})
   }
-  schedule = allEvents;
+  exports.schedule = allEvents;
 }
 
 function extractTitle(event) {
@@ -46,13 +47,9 @@ function extractDate(event) {
   return { 'day': r(event)[1], 'start': r(event)[2], 'end': r(event)[2]};
 }
 
-queryIfmSchedule();
-
-setInterval(function() {
+exports.startServer = function() {
   queryIfmSchedule();
+  setInterval(function() {
+    queryIfmSchedule();
   }, POLL_INTERVAL);
-
-http.createServer(function (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end(JSON.stringify(schedule) + "\n");
-}).listen(8081);
+}

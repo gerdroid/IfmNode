@@ -1,9 +1,11 @@
 var net = require('net'),
     https = require('https'),
-    jquery = require('jquery');
+    jquery = require('jquery'),
     log4js = require('log4js')(),
-    logger = log4js.getLogger("ifm");
-    http = require('http');
+    logger = log4js.getLogger("ifm"),
+    http = require('http'),
+    url = require('url'),
+    ifmSchedule = require('./schedule')
 
 global.WEB = 8080;
 global.PORT = 8142;
@@ -41,9 +43,6 @@ function setupClient(socket, number) {
     logger.info('client ' + number + ', aborted connection. ' + clients.length + ' connections open');
   });
 }
-
-server.listen(PORT);
-logger.info("server started...accept conections");
 
 function queryIfm(channel, callback) {
   https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
@@ -85,10 +84,18 @@ function pushToClients(channelIndex, info) {
 
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  var text = "open connections: " + clients.length + "\n\n";
-  jquery.each(clients, function(index, socket) {
-    text = text + index + ": " + socket.remoteAddress + "\n";
-  });
-  res.end(text);
+  var path = url.parse(req.url).pathname;
+  if (path == '/upcoming') {
+    res.end(JSON.stringify(ifmSchedule.schedule));
+  } else if (path == '/stats') {
+    var text = "open connections: " + clients.length + "\n\n";
+    jquery.each(clients, function(index, socket) {
+      text = text + index + ": " + socket.remoteAddress + "\n";
+    });
+    res.end(text);
+  }
 }).listen(WEB);
 
+ifmSchedule.startServer();
+server.listen(PORT);
+logger.info("server started...accept conections");
