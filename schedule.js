@@ -4,7 +4,7 @@ var https = require('https'),
     logger = log4js.getLogger("ifm"),
     jquery = require('jquery');
 
-global.POLL_INTERVAL = 1000 * 60 * 30;
+SCHEDULE_POLL_INTERVAL = 1000 * 60 * 30;
 
 exports.schedule = [];
 
@@ -51,5 +51,5 @@ exports.startServer = function() {
   queryIfmSchedule();
   setInterval(function() {
     queryIfmSchedule();
-  }, POLL_INTERVAL);
+  }, SCHEDULE_POLL_INTERVAL);
 }
