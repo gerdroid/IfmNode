@@ -44,7 +44,7 @@ function extractTitle(event) {
 function extractDate(event) {
   var r = /(.*?) \| (.*?) - (.*?)\n/;
   var d = Date.parse(r(event)[1]);
-  return { 'day': r(event)[1], 'start': r(event)[2], 'end': r(event)[2]};
+  return { 'day': r(event)[1], 'start': r(event)[2], 'end': r(event)[3]};
 }
 
 exports.startServer = function() {
