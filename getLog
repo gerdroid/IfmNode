@@ -1,0 +1,2 @@
+#!/bin/bash
+scp ec2-79-125-57-87.eu-west-1.compute.amazonaws.com:/home/ec2-user/scripts/IfmNode/ifm.log .

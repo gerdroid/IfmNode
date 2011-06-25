@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh ec2-79-125-57-87.eu-west-1.compute.amazonaws.com
