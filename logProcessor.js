@@ -1,23 +1,28 @@
 var lines=require("lines-adapter");
+var log4js = require('log4js')();
+var logger = log4js.getLogger("ifm");
 var fs=require('fs');
 var jquery=require('jquery');
 
-
 var parse = function(line) {
-  var d = /\[(.*?)\].*/(line)[1];
+  var d = /\[(.*?)\].*/(line);
+  var date = "";
+  if (d !== null) {
+    date = d[1];
+  }
   var c = /.*- client (.*?), (.*?) connection*./(line);
   if (c !== null) {
-    return {date: new Date(d), idx: c[1], action: c[2]}
+    return {date: new Date(date), idx: c[1], action: c[2]}
   } else {
     var a = /.*- server started...accept conections*./(line);
     if (a !== null) {
-      return {date: new Date(d), action: 'reset'}
+      return {date: new Date(date), action: 'reset'}
     }
   }
   return "";
 }
 
-var processLog = function(logFile, callback) {
+exports.processLog = function(logFile, callback) {
   var openConnections = {};
   lines(fs.createReadStream(logFile), 'utf8').on('data',
     function(line) {
@@ -37,45 +42,99 @@ var processLog = function(logFile, callback) {
       });
 }
 
-var totalTime = {
-  sum: 0,
-  process: function(start, end) {
-    // duration in minutes
-    var duration = (end.date - start.date) / 60000;
-    this.sum += duration;
-  },
+exports.totalConnections = function(callback) {
+  var sum = 0;
+  return {
+    process: function(start, end) {
+      sum++;
+    },
 
-  end: function() {
-    console.log(this.sum);
-  }
-};
+    end: function() {
+      callback(sum);
+    }
+  };
+}
 
-var totalConnections = {
-  sum: 0,
-  process: function(start, end) {
-    var h = start.date.getHours();
-    console.log(h);
-    this.sum++;
-  },
+exports.totalTime = function() {
+  var sum = 0;
+  return {
+    process: function(start, end) {
+      // duration in minutes
+      var duration = (end.date - start.date) / 60000;
+      sum += duration;
+    },
 
-  end: function() {
-    console.log(this.sum);
-  }
-};
+    end: function() {
+      console.log(sum);
+    }
+  };
+}
 
-var connectionsPerHour = {
-  sum: 0,
-  process: function(start, end) {
-    var h = start.date.getHours();
-    console.log(h);
-    this.sum++;
-  },
+exports.connectionsPerTime = function(callback, timeInterval) {
+  var connections = [];
+  return {
+    process: function(start, end) {
+      connections.push(start.date.getTime());
+    },
+    end: function() {
+      connections.sort(function(a, b) {
+        return a - b;
+      });
+      var startTime = connections[0];
+      var normalized = connections.map(function(x) {
+        return x - startTime;
+      });
+      var interval = 1000 * timeInterval;
+      var i = 0;
+      var intervalCounter = 0;
+      var res = [];
+      while (i < normalized.length) {
+        var t = intervalCounter * interval;
+        var c = 0;
+        while ((i < normalized.length) && (normalized[i] < t)) {
+          i++;
+          c++;
+        }
+        var timeStamp = intervalCounter * interval + startTime;
+        res[intervalCounter] = [timeStamp, c];
+        intervalCounter++;
+      }
+      callback(res);
+    }
+  };
+}
 
-  end: function() {
-    console.log(this.sum);
-  }
-};
-
-processLog('ifm.log', totalTime);
-processLog('ifm.log', totalConnections);
-
+exports.connectionTime = function(callback, timeInterval, scaleFactor) {
+  var connections = [];
+  return {
+    process: function(start, end) {
+      var item = [start.date.getTime(), end.date.getTime() - start.date.getTime()];
+      connections.push(item);
+    },
+    end: function() {
+      connections.sort(function(a, b) {
+        return a[0] - b[0];
+      });
+      var startTime = connections[0][0];
+      var normalized = connections.map(function(x) {
+        return [x[0] - startTime, x[1]];
+      });
+      var interval = 1000 * timeInterval;
+      var i = 0;
+      var intervalCounter = 0;
+      var res = [];
+      while (i < normalized.length) {
+        var t = intervalCounter * interval;
+        var c = 0;
+        while ((i < normalized.length) && (normalized[i][0] < t)) {
+          c = c + normalized[i][1];
+          i++;
+        }
+        var timeStamp = intervalCounter * interval + startTime;
+        res[intervalCounter] = [timeStamp, c / scaleFactor];
+        intervalCounter++;
+      }
+      callback(res);
+    }
+  };
+}

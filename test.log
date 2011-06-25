@@ -1,0 +1,20 @@
+[2011-04-20 10:37:27.214] [INFO] ifm - server started...accept conections
+[2011-04-20 10:37:33.394] [INFO] ifm - client 0, opened connection. 1 connections open
+[2011-04-20 10:37:52.421] [INFO] ifm - client 0, closed connection. 0 connections open
+[2011-04-20 10:38:01.545] [INFO] ifm - client 1, opened connection. 1 connections open
+[2011-04-20 10:38:04.680] [INFO] ifm - client 2, opened connection. 2 connections open
+[2011-04-20 10:38:14.790] [INFO] ifm - client 2, closed connection. 1 connections open
+[2011-04-20 10:38:15.745] [INFO] ifm - client 3, opened connection. 2 connections open
+[2011-04-20 10:38:29.804] [INFO] ifm - client 1, closed connection. 1 connections open
+[2011-04-20 10:38:32.052] [INFO] ifm - client 3, closed connection. 0 connections open
+[2011-04-20 22:24:30.218] [INFO] ifm - server started...accept conections
+[2011-04-20 22:26:28.201] [INFO] ifm - client 0, opened connection. 1 connections open.
+[2011-04-20 22:26:28.532] [INFO] ifm - client 0, closed connection. 0 connections open.
+[2011-04-20 22:26:44.765] [INFO] ifm - client 1, opened connection. 1 connections open.
+[2011-04-20 22:26:49.391] [INFO] ifm - client 1, closed connection. 0 connections open.
+[2011-05-05 22:53:39.311] [INFO] ifm - server started...accept conections
+[2011-05-09 18:21:56.060] [INFO] ifm - server started...accept conections
+[2011-05-09 20:45:00.447] [INFO] ifm - server started...accept conections
+[2011-05-09 20:45:44.444] [INFO] ifm - server started...accept conections
+[2011-05-09 20:48:56.563] [INFO] ifm - server started...accept conections
+[2011-05-09 20:49:47.052] [INFO] ifm - server started...accept conections

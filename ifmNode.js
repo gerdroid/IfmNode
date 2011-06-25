@@ -5,7 +5,9 @@ var net = require('net'),
     logger = log4js.getLogger("ifm"),
     http = require('http'),
     url = require('url'),
-    ifmSchedule = require('./schedule')
+    ifmSchedule = require('./schedule'),
+    static = require('node-static'),
+    logProcessor = require('./logProcessor');
 
 global.WEB = 8080;
 global.PORT = 8142;
@@ -18,7 +20,7 @@ var clients = [];
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
 
-var server = net.createServer(function(socket) {
+var pushServer = net.createServer(function(socket) {
   socket.setNoDelay(true);
   setupClient(socket, clientNumber);
   clientNumber++;
@@ -82,18 +84,32 @@ function pushToClients(channelIndex, info) {
   });
 }
 
+var fileServer = new(static.Server)('./www');
 http.createServer(function (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
   var path = url.parse(req.url).pathname;
   if (path == '/upcoming') {
     res.end(JSON.stringify(ifmSchedule.schedule));
+    res.writeHead(200, {'Content-Type': 'text/plain'});
   } else if (path == '/stats') {
     var text = "open connections: " + clients.length + "\n\n";
     jquery.each(clients, function(index, socket) {
       text = text + index + ": " + socket.remoteAddress + "\n";
     });
+    res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end(text);
-  }
+  } else if (path == '/connectionTime') {
+    var interval = parseInt(url.parse(req.url, true).query.interval);
+    var scale = parseInt(url.parse(req.url, true).query.scale);
+    logProcessor.processLog('ifm.log', logProcessor.connectionTime(function(conPerHour) {
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.end(JSON.stringify(conPerHour));
+    }, interval, scale));
+  } else {
+    req.on('end', function() {
+      logger.info('serve static fileServer');
+      fileServer.serve(req, res);
+    });
+  } 
 }).listen(WEB);
 
 ifmSchedule.startServer();
