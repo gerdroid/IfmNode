@@ -20,7 +20,7 @@ var queryIfmSchedule = function() {
       extractEvents(eventList);
     });
   }).on('error', function() {
-      console.log('could not reach IFM');
+      logger.error('could not reach IFM');
   });
 }
 
