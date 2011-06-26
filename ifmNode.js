@@ -104,6 +104,12 @@ http.createServer(function (req, res) {
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end(JSON.stringify(conPerHour));
     }, interval, scale));
+  } else if (path == '/connections') {
+    var interval = parseInt(url.parse(req.url, true).query.interval);
+    logProcessor.processLog('ifm.log', logProcessor.connectionsPerTime(function(conPerHour) {
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.end(JSON.stringify(conPerHour));
+    }, interval));
   } else {
     req.on('end', function() {
       logger.info('serve static fileServer');
@@ -113,5 +119,5 @@ http.createServer(function (req, res) {
 }).listen(WEB);
 
 ifmSchedule.startServer();
-server.listen(PORT);
+pushServer.listen(PORT);
 logger.info("server started...accept conections");
