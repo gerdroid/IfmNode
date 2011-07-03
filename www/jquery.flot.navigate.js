@@ -121,7 +121,8 @@ Licensed under the MIT License ~ http://threedubmedia.googlecode.com/files/MIT-L
         pan: {
             interactive: false,
             cursor: "move",
-            frameRate: 20
+            frameRate: 20,
+            mode: "xy"
         }
     };
 
@@ -161,11 +162,11 @@ Licensed under the MIT License ~ http://threedubmedia.googlecode.com/files/MIT-L
                 return;
 
             panTimeout = setTimeout(function () {
-                plot.pan({ left: prevPageX - e.pageX,
-                           top: prevPageY - e.pageY });
+                var left = (plot.getOptions().pan.mode.indexOf('x') > -1) ?  prevPageX - e.pageX : 0;
+                var top  = (plot.getOptions().pan.mode.indexOf('y') > -1) ?  prevPageY - e.pageY : 0;
+                plot.pan({ left: left, top: top });
                 prevPageX = e.pageX;
                 prevPageY = e.pageY;
-                                                    
                 panTimeout = null;
             }, 1 / frameRate * 1000);
         }
