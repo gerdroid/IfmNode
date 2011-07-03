@@ -17,40 +17,32 @@
  
   <script id="source"> 
     $(function () {
-      var t = 60 * 60 * 24 * 7;
+      var t = 60 * 60 * 24;
       var s = 60 * 60;
-      $.getJSON("http://localhost:8080/connectionTime?interval=" + t + "&scale=" + s, function(d) {
-        var rangeStart =d[0][0];
-        var rangeEnd =d[d.length-1][0];
-        var week = rangeStart + 1000 * 60 * 60 * 24 * 7 * 4;
-        var options = { 
+      $.getJSON("http://localhost:8080/stats/connectionTime?interval=" + t + "&scale=" + s, function(d) {
+        plot($("#placeholder1"), d, 1000 * 60 * 60 * 24 * 7 * 4);
+      });
+      $.getJSON("http://localhost:8080/stats/connections?interval=" + t, function(d) {
+        plot($("#placeholder2"), d, 1000 * 60 * 60 * 24 * 7 * 4);
+      });
+      
+      function plot(placeholder, data, range) {
+        var rangeStart = data[0][0];
+        var rangeEnd = data[data.length-1][0];
+        var options = {
           xaxis: { 
             mode: "time",
-            max: week,
+            max: (rangeStart + range),
             panRange: [rangeStart, rangeEnd]
           }, 
           pan: {
-            interactive: true
+            interactive: true,
+            mode: "x"
           }
         };
-        $.plot($("#placeholder1"), [d], options);
-      });
-      $.getJSON("http://localhost:8080/connections?interval=" + t, function(d) {
-        var rangeStart =d[0][0];
-        var rangeEnd =d[d.length-1][0];
-        var week = rangeStart + 1000 * 60 * 60 * 24 * 7 * 4;
-        var options = { 
-          xaxis: { 
-            mode: "time",
-            max: week,
-            panRange: [rangeStart, rangeEnd]
-          }, 
-          pan: {
-            interactive: true
-          }
-        };
-        $.plot($("#placeholder2"), [d], options);
-      });
+        $.plot(placeholder, [data], options);
+        /*$.plot(placeholder, [data], options);*/
+      }
     });
   </script> 
  </body> 
