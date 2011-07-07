@@ -19,10 +19,12 @@
     $(function () {
       var t = 60 * 60 * 24;
       var s = 1000 * 60 * 60;
-      $.getJSON("http://localhost:8080/stats/connectionTime?interval=" + t + "&scale=" + s, function(d) {
+      var HOST = "ec2-79-125-57-87.eu-west-1.compute.amazonaws.com";
+      var PORT = 8080;
+      $.getJSON("http:" + HOST + ":" + PORT" + "/stats/connectionTime?interval=" + t + "&scale=" + s, function(d) {
         plot($("#placeholder1"), d, 1000 * 60 * 60 * 24 * 7 * 4);
       });
-      $.getJSON("http://localhost:8080/stats/connections?interval=" + t, function(d) {
+      $.getJSON("http:" + HOST + ":" + PORT" + "/stats/connections?interval=" + t, function(d) {
         plot($("#placeholder2"), d, 1000 * 60 * 60 * 24 * 7 * 4);
       });
       
