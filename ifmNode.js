@@ -84,39 +84,43 @@ function pushToClients(channelIndex, info) {
   });
 }
 
-var fileServer = new(static.Server)('./www');
-http.createServer(function (req, res) {
-  var path = url.parse(req.url).pathname;
-  if (path == '/upcoming') {
-    res.end(JSON.stringify(ifmSchedule.schedule));
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-  } else if (path == '/stats') {
-    var text = "open connections: " + clients.length + "\n\n";
-    jquery.each(clients, function(index, socket) {
-      text = text + index + ": " + socket.remoteAddress + "\n";
-    });
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end(text);
-  } else if (path == '/connectionTime') {
-    var interval = parseInt(url.parse(req.url, true).query.interval);
-    var scale = parseInt(url.parse(req.url, true).query.scale);
-    logProcessor.processLog('ifm.log', logProcessor.connectionTime(function(conPerHour) {
+(function() {
+  var fileServer = new(static.Server)('./www');
+  http.createServer(function (req, res) {
+    var path = url.parse(req.url).pathname;
+    if (path == '/upcoming') {
+      sendAsJSON(res, ifmSchedule.schedule);
+    } else if (path == '/stats/live') {
+      var text = "open connections: " + clients.length + "\n\n";
+      jquery.each(clients, function(index, socket) {
+        text = text + index + ": " + socket.remoteAddress + "\n";
+      });
       res.writeHead(200, {'Content-Type': 'text/plain'});
-      res.end(JSON.stringify(conPerHour));
-    }, interval, scale));
-  } else if (path == '/connections') {
-    var interval = parseInt(url.parse(req.url, true).query.interval);
-    logProcessor.processLog('ifm.log', logProcessor.connectionsPerTime(function(conPerHour) {
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      res.end(JSON.stringify(conPerHour));
-    }, interval));
-  } else {
-    req.on('end', function() {
-      logger.info('serve static fileServer');
-      fileServer.serve(req, res);
-    });
-  } 
-}).listen(WEB);
+      res.end(text);
+    } else if (path == '/stats/connectionTime') {
+      var interval = parseInt(url.parse(req.url, true).query.interval);
+      var scale = parseInt(url.parse(req.url, true).query.scale);
+      logProcessor.processLog('ifm.log', logProcessor.connectionTime(function(conPerHour) {
+        sendAsJSON(res, conPerHour);
+      }, interval, scale));
+    } else if (path == '/stats/connections') {
+      var interval = parseInt(url.parse(req.url, true).query.interval);
+      logProcessor.processLog('ifm.log', logProcessor.connectionsPerTime(function(conPerHour) {
+        sendAsJSON(res, conPerHour);
+      }, interval));
+    } else {
+      req.on('end', function() {
+        logger.info('serve static fileServer');
+        fileServer.serve(req, res);
+      });
+    } 
+  }).listen(WEB);
+
+  function sendAsJSON(res, str) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end(JSON.stringify(str));
+  }
+})();
 
 ifmSchedule.startServer();
 pushServer.listen(PORT);
