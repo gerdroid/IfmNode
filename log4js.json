@@ -2,8 +2,8 @@
   "appenders": [
     { 
       "category": "ifm", 
-      "type": "file"
-      "fileName": "ifm.log"
+      "type": "file",
+      "filename": "ifm.log"
     },
     { 
       "category": "ifmconsole", 
