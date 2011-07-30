@@ -1,5 +1,6 @@
 var net = require('net'),
     https = require('https'),
+    os = require('os'),
     jquery = require('jquery'),
     log4js = require('log4js')(),
     logger = log4js.getLogger("ifm"),
@@ -53,7 +54,15 @@ function queryIfm(channel, callback) {
       var path = /.*img src="(.*?)".*/(d)[1];
       var track = /.*<div id="track-info-trackname">\s*<.*?>(.*?)<\/a>.*/(d)[1];
       var label = /.*<div id="track-info-label">(.*?)<\/div>.*/(d)[1];
-      var info =  { "path": path , "track": track, "label": label };
+      var rating = 0;
+      var numberOfRatings = 0;
+      if (d.search(/not yet rated.*/) == -1) {
+        ratingInfo = /.*rating: (.*?)<\/form>.*/(d)[1];
+        rating = /(.*?)\/.*/(ratingInfo)[1];
+        numberOfRatings = /.*\((.*) votes\).*/(ratingInfo)[1];
+      }
+      var info =  { "path": path , "track": track, "label": label, "rating": rating, "numberOfRatings": numberOfRatings};
+      logger.info('>>>>>>>>>>>' + info.rating);
       callback(channel, info);
     });
   }).on('error', function(e) {
@@ -125,3 +134,4 @@ function pushToClients(channelIndex, info) {
 ifmSchedule.startServer();
 pushServer.listen(PORT);
 logger.info("server started...accept conections");
+
