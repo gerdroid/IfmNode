@@ -19,13 +19,12 @@
     $(function () {
       var t = 60 * 60 * 24;
       var s = 1000 * 60 * 60;
-      var HOST = "ec2-79-125-57-87.eu-west-1.compute.amazonaws.com";
-      var PORT = 8080;
-      $.getJSON("http:" + HOST + ":" + PORT" + "/stats/connectionTime?interval=" + t + "&scale=" + s, function(d) {
-        plot($("#placeholder1"), d, 1000 * 60 * 60 * 24 * 7 * 4);
+      var DAY = 1000 * 60 * 60 * 24;
+      $.getJSON("/stats/connectionTime?interval=" + t + "&scale=" + s, function(d) {
+        plot($("#placeholder1"), d,  DAY * 7 * 4);
       });
-      $.getJSON("http:" + HOST + ":" + PORT" + "/stats/connections?interval=" + t, function(d) {
-        plot($("#placeholder2"), d, 1000 * 60 * 60 * 24 * 7 * 4);
+      $.getJSON("/stats/connections?interval=" + t, function(d) {
+        plot($("#placeholder2"), d, DAY * 7 * 4);
       });
       
       function plot(placeholder, data, range) {
@@ -42,8 +41,8 @@
             mode: "x"
           }
         };
-        $.plot(placeholder, [data], options);
-        /*$.plot(placeholder, [data], options);*/
+        var p = $.plot(placeholder, [data], options);
+        p.pan({left: 10000});
       }
     });
   </script> 
