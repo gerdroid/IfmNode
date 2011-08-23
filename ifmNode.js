@@ -19,7 +19,7 @@ var NUMBER_OF_CHANNELS = 3;
 var clientNumber = 0;
 var clients = [];
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
-trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": ""} });
+trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": "", "rating": "", "votes": ""} });
 
 var pushServer = net.createServer(function(socket) {
   socket.setNoDelay(true);
@@ -61,8 +61,7 @@ function queryIfm(channel, callback) {
         rating = /(.*?)\/.*/(ratingInfo)[1];
         numberOfRatings = /.*\((.*) votes\).*/(ratingInfo)[1];
       }
-      var info =  { "path": path , "track": track, "label": label, "rating": rating, "numberOfRatings": numberOfRatings};
-      logger.info('>>>>>>>>>>>' + info.rating);
+      var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
       callback(channel, info);
     });
   }).on('error', function(e) {
@@ -99,6 +98,20 @@ function pushToClients(channelIndex, info) {
     var path = url.parse(req.url).pathname;
     if (path == '/upcoming') {
       sendAsJSON(res, ifmSchedule.schedule);
+    } else if (path.substring(0, '/channelinfo'.length) === '/channelinfo')  {
+      var match = /\/channelinfo\/(.)/(path);
+      if (match != null) {
+        var channel = parseInt(match[1]) - 1;
+        if ((channel >= 0) && (channel < NUMBER_OF_CHANNELS)) {
+          res.writeHead(200, {'Content-Type': 'application/json'});
+          res.end(JSON.stringify(trackInfos[channel]));
+        } else {
+          res.writeHead(404, "channel does not exist");
+          res.end();
+        }
+      } else {
+        res.end(JSON.stringify(trackInfos));
+      }
     } else if (path == '/stats/live') {
       var text = "open connections: " + clients.length + "\n\n";
       jquery.each(clients, function(index, socket) {
@@ -126,7 +139,7 @@ function pushToClients(channelIndex, info) {
   }).listen(WEB);
 
   function sendAsJSON(res, str) {
-    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.writeHead(200, {'Content-Type': 'application/json'});
     res.end(JSON.stringify(str));
   }
 })();
