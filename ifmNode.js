@@ -72,13 +72,28 @@ function queryIfm(channel, callback) {
 setInterval(function() {
   for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
     queryIfm(i, function(index, info) {
+      var updates = [];
       if (info.track != trackInfos[index].track) {
         pushToClients(index, info);
         trackInfos[index] = info;
+        updates.push(i);
       }
+      triggerClients(updates);
     });
   }
 }, POLL_INTERVAL);
+
+function triggerClients(channels) {
+  var clientUpdate = { "update": channels };
+  jquery.each(clients, function(index, socket) {
+   if (socket.bufferSize > MAX_BUFFER_SIZE) {
+      logger.info("closing socket to dead client");
+      socket.end();
+    } else {
+      socket.write(JSON.stringify(clientUpdate) + "\n");
+    }
+  });
+}
 
 function pushToClients(channelIndex, info) {
   var clientUpdate = { "channel": channelIndex, "infos": info};
