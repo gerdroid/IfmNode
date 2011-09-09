@@ -1,51 +1,34 @@
-var net = require('net'),
-    https = require('https'),
+var https = require('https'),
     os = require('os'),
+    net = require('net'),
     jquery = require('jquery'),
     log4js = require('log4js')(),
     logger = log4js.getLogger("ifm"),
     http = require('http'),
     url = require('url'),
     ifmSchedule = require('./schedule'),
+    pushServer = require('./pushServer'),
     static = require('node-static'),
     logProcessor = require('./logProcessor');
 
 global.WEB = 8080;
-global.PORT = 8142;
+global.LEGACY_PUSH_PORT = 8142;
 global.POLL_INTERVAL = 20000;
 global.MAX_BUFFER_SIZE = 1024;
 
 var NUMBER_OF_CHANNELS = 3;
-var clientNumber = 0;
-var clients = [];
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": "", "rating": "", "votes": ""} });
 
-var pushServer = net.createServer(function(socket) {
-  socket.setNoDelay(true);
-  setupClient(socket, clientNumber);
-  clientNumber++;
+var legacyServer = pushServer.createPushServer(LEGACY_PUSH_PORT, function(server) {
+  var str = "";
+  for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
+    str += JSON.stringify(trackInfos[i]) + "\n";
+  }
+  server.each(function(socket) {
+    socket.write(str);
+  })
 });
-
-function setupClient(socket, number) {
-  socket.on('connect', function() {
-    clients.push(socket);
-    logger.info('client ' + number + ', opened connection. ' + clients.length + ' connections open');
-    for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
-      pushToClients(i, trackInfos[i]);
-    }
-  });
-  socket.once('end', function() {
-    var idx = clients.indexOf(socket);
-    if (idx != -1) clients.splice(idx, 1);
-    logger.info('client ' + number + ', closed connection. ' + clients.length + ' connections open');
-  });
-  socket.once('error', function() {
-    var idx = clients.indexOf(socket);
-    if (idx != -1) clients.splice(idx, 1);
-    logger.info('client ' + number + ', aborted connection. ' + clients.length + ' connections open');
-  });
-}
 
 function queryIfm(channel, callback) {
   https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
@@ -68,44 +51,42 @@ function queryIfm(channel, callback) {
     logger.error(e.message);
   });
 }
-
-setInterval(function() {
+  
+function monitorChannels(callback) {
+  setInterval(function() {
   for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
     queryIfm(i, function(index, info) {
-      var updates = [];
       if (info.track != trackInfos[index].track) {
-        pushToClients(index, info);
-        trackInfos[index] = info;
-        updates.push(i);
+        callback(index, info);
       }
-      triggerClients(updates);
     });
   }
-}, POLL_INTERVAL);
-
-function triggerClients(channels) {
-  var clientUpdate = { "update": channels };
-  jquery.each(clients, function(index, socket) {
-   if (socket.bufferSize > MAX_BUFFER_SIZE) {
-      logger.info("closing socket to dead client");
-      socket.end();
-    } else {
-      socket.write(JSON.stringify(clientUpdate) + "\n");
-    }
-  });
+  }, POLL_INTERVAL);
 }
 
-function pushToClients(channelIndex, info) {
-  var clientUpdate = { "channel": channelIndex, "infos": info};
-  jquery.each(clients, function(index, socket) {
-   if (socket.bufferSize > MAX_BUFFER_SIZE) {
-      logger.info("closing socket to dead client");
-      socket.end();
-    } else {
-      socket.write(JSON.stringify(clientUpdate) + "\n");
-    }
-  });
-}
+//function triggerClients(channels) {
+  //var clientUpdate = { "update": channels };
+  //jquery.each(clients, function(index, socket) {
+   //if (socket.bufferSize > MAX_BUFFER_SIZE) {
+      //logger.info("closing socket to dead client");
+      //socket.end();
+    //} else {
+      //socket.write(JSON.stringify(clientUpdate) + "\n");
+    //}
+  //});
+//}
+
+//function pushToClients(channelIndex, info) {
+  //var clientUpdate = { "channel": channelIndex, "infos": info};
+  //jquery.each(clients, function(index, socket) {
+   //if (socket.bufferSize > MAX_BUFFER_SIZE) {
+      //logger.info("closing socket to dead client");
+      //socket.end();
+    //} else {
+      //socket.write(JSON.stringify(clientUpdate) + "\n");
+    //}
+  //});
+//}
 
 (function() {
   var fileServer = new(static.Server)('./www');
@@ -160,6 +141,5 @@ function pushToClients(channelIndex, info) {
 })();
 
 ifmSchedule.startServer();
-pushServer.listen(PORT);
 logger.info("server started...accept conections");
 
