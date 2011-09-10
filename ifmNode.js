@@ -52,17 +52,28 @@ function queryIfm(channel, callback) {
   });
 }
   
-function monitorChannels(callback) {
-  setInterval(function() {
-  for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
-    queryIfm(i, function(index, info) {
-      if (info.track != trackInfos[index].track) {
-        callback(index, info);
-      }
-    });
+function monitorChannels() {
+  function queryAll() {
+    for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
+      queryIfm(i, function(index, info) {
+        if (info.track != trackInfos[index].track) {
+          trackInfos[index] = info;
+          logger.info("channel " + index + ": " + JSON.stringify(info));
+          legacyServer.each(function(socket) {
+            socket.write(JSON.stringify(info) + "\n");
+          });
+        }
+      });
+    }
   }
+
+  queryAll();
+  setInterval(function() {
+    queryAll();
   }, POLL_INTERVAL);
 }
+
+monitorChannels();
 
 //function triggerClients(channels) {
   //var clientUpdate = { "update": channels };
@@ -76,17 +87,6 @@ function monitorChannels(callback) {
   //});
 //}
 
-//function pushToClients(channelIndex, info) {
-  //var clientUpdate = { "channel": channelIndex, "infos": info};
-  //jquery.each(clients, function(index, socket) {
-   //if (socket.bufferSize > MAX_BUFFER_SIZE) {
-      //logger.info("closing socket to dead client");
-      //socket.end();
-    //} else {
-      //socket.write(JSON.stringify(clientUpdate) + "\n");
-    //}
-  //});
-//}
 
 (function() {
   var fileServer = new(static.Server)('./www');
