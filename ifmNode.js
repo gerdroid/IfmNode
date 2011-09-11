@@ -62,7 +62,6 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
         queryIfm(i, function(index, info) {
           if (info.track != trackInfos[index].track) {
             trackInfos[index] = info;
-            logger.info("channel " + index + ": " + JSON.stringify(info));
             legacyServer.each(function(socket) {
               socket.write(JSON.stringify(info) + "\n");
             });
@@ -103,12 +102,12 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
         res.end(JSON.stringify(trackInfos));
       }
     } else if (path == '/stats/live') {
-      var text = "open connections: " + clients.length + "\n\n";
-      jquery.each(clients, function(index, socket) {
-        text = text + index + ": " + socket.remoteAddress + "\n";
-      });
+      var text = "open connections: " + legacyServer.getConnections() + "\n\n";
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end(text);
+      //legacyServer.each(function(socket) {
+        //text = text + index + ": " + socket.remoteAddress + "\n";
+      //});
     } else if (path == '/stats/connectionTime') {
       var interval = parseInt(url.parse(req.url, true).query.interval);
       var scale = parseInt(url.parse(req.url, true).query.scale);

@@ -41,6 +41,9 @@ var net = require('net'),
             action(socket);
           }
         });
+      },
+      getConnections: function() {
+        return clients.length;
       }
     }
     return server;
