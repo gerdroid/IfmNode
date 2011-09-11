@@ -16,7 +16,7 @@ var net = require('net'),
     function setupClient(socket, number) {
       socket.on('connect', function() {
         clients.push(socket);
-        onConnected(server);
+        if (onConnected !== undefined) onConnected(server);
         logger.info('client ' + number + ', opened connection. ' + clients.length + ' connections open');
       });
       socket.once('end', function() {

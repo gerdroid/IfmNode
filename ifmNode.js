@@ -13,6 +13,7 @@ var https = require('https'),
 
 global.WEB = 8080;
 global.LEGACY_PUSH_PORT = 8142;
+global.TRIGGER_PORT = 8143;
 global.POLL_INTERVAL = 20000;
 global.MAX_BUFFER_SIZE = 1024;
 
@@ -30,62 +31,55 @@ var legacyServer = pushServer.createPushServer(LEGACY_PUSH_PORT, function(server
   })
 });
 
-function queryIfm(channel, callback) {
-  https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
-    res.setEncoding('utf8');
-    res.on('data', function(d) {
-      var path = /.*img src="(.*?)".*/(d)[1];
-      var track = /.*<div id="track-info-trackname">\s*<.*?>(.*?)<\/a>.*/(d)[1];
-      var label = /.*<div id="track-info-label">(.*?)<\/div>.*/(d)[1];
-      var rating = 0;
-      var numberOfRatings = 0;
-      if (d.search(/not yet rated.*/) == -1) {
-        ratingInfo = /.*rating: (.*?)<\/form>.*/(d)[1];
-        rating = /(.*?)\/.*/(ratingInfo)[1];
-        numberOfRatings = /.*\((.*) votes\).*/(ratingInfo)[1];
-      }
-      var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
-      callback(channel, info);
-    });
-  }).on('error', function(e) {
-    logger.error(e.message);
-  });
-}
-  
-function monitorChannels() {
-  function queryAll() {
-    for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
-      queryIfm(i, function(index, info) {
-        if (info.track != trackInfos[index].track) {
-          trackInfos[index] = info;
-          logger.info("channel " + index + ": " + JSON.stringify(info));
-          legacyServer.each(function(socket) {
-            socket.write(JSON.stringify(info) + "\n");
-          });
+var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
+
+(function() {
+  function queryIfm(channel, callback) {
+    https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function(d) {
+        var path = /.*img src="(.*?)".*/(d)[1];
+        var track = /.*<div id="track-info-trackname">\s*<.*?>(.*?)<\/a>.*/(d)[1];
+        var label = /.*<div id="track-info-label">(.*?)<\/div>.*/(d)[1];
+        var rating = 0;
+        var numberOfRatings = 0;
+        if (d.search(/not yet rated.*/) == -1) {
+          ratingInfo = /.*rating: (.*?)<\/form>.*/(d)[1];
+          rating = /(.*?)\/.*/(ratingInfo)[1];
+          numberOfRatings = /.*\((.*) votes\).*/(ratingInfo)[1];
         }
+        var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
+        callback(channel, info);
       });
-    }
+    }).on('error', function(e) {
+      logger.error(e.message);
+    });
   }
+    
+  (function monitorChannels() {
+    function queryAll() {
+      for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
+        queryIfm(i, function(index, info) {
+          if (info.track != trackInfos[index].track) {
+            trackInfos[index] = info;
+            logger.info("channel " + index + ": " + JSON.stringify(info));
+            legacyServer.each(function(socket) {
+              socket.write(JSON.stringify(info) + "\n");
+            });
+            triggerServer.each(function(socket) {
+              socket.write(JSON.stringify(index) + "\n");
+            });
+          }
+        });
+      }
+    }
 
-  queryAll();
-  setInterval(function() {
     queryAll();
-  }, POLL_INTERVAL);
-}
-
-monitorChannels();
-
-//function triggerClients(channels) {
-  //var clientUpdate = { "update": channels };
-  //jquery.each(clients, function(index, socket) {
-   //if (socket.bufferSize > MAX_BUFFER_SIZE) {
-      //logger.info("closing socket to dead client");
-      //socket.end();
-    //} else {
-      //socket.write(JSON.stringify(clientUpdate) + "\n");
-    //}
-  //});
-//}
+    setInterval(function() {
+      queryAll();
+    }, POLL_INTERVAL);
+  })();
+})();
 
 
 (function() {
