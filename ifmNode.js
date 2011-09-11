@@ -63,7 +63,8 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
           if (info.track != trackInfos[index].track) {
             trackInfos[index] = info;
             legacyServer.each(function(socket) {
-              socket.write(JSON.stringify(info) + "\n");
+              var update = { "channel": index, "infos": info };
+              socket.write(JSON.stringify(update) + "\n");
             });
             triggerServer.each(function(socket) {
               socket.write(JSON.stringify(index) + "\n");
