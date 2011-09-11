@@ -24,7 +24,8 @@ trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": 
 var legacyServer = pushServer.createPushServer(LEGACY_PUSH_PORT, function(server) {
   var str = "";
   for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
-    str += JSON.stringify(trackInfos[i]) + "\n";
+    var update = { "channel": i, "infos": trackInfos[i] };
+    str += JSON.stringify(update) + "\n";
   }
   server.each(function(socket) {
     socket.write(str);
