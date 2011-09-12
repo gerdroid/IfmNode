@@ -105,11 +105,13 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
       }
     } else if (path == '/stats/live') {
       var text = "open connections: " + legacyServer.getConnections() + "\n\n";
+      var index = 0;
+      legacyServer.each(function(socket) {
+        text = text + index + ": " + socket.remoteAddress + "\n";
+        index++;
+      });
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end(text);
-      //legacyServer.each(function(socket) {
-        //text = text + index + ": " + socket.remoteAddress + "\n";
-      //});
     } else if (path == '/stats/connectionTime') {
       var interval = parseInt(url.parse(req.url, true).query.interval);
       var scale = parseInt(url.parse(req.url, true).query.scale);
