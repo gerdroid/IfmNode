@@ -1,6 +1,5 @@
 var https = require('https'),
     os = require('os'),
-    net = require('net'),
     jquery = require('jquery'),
     log4js = require('log4js')(),
     logger = log4js.getLogger("ifm"),
@@ -63,12 +62,12 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
         queryIfm(i, function(index, info) {
           if (info.track != trackInfos[index].track) {
             trackInfos[index] = info;
+            var update = { "channel": index, "infos": info };
             legacyServer.each(function(socket) {
-              var update = { "channel": index, "infos": info };
               socket.write(JSON.stringify(update) + "\n");
             });
             triggerServer.each(function(socket) {
-              socket.write(JSON.stringify(index) + "\n");
+              socket.write(JSON.stringify({"update": [index]}));
             });
           }
         });
