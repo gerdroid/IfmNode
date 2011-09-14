@@ -67,7 +67,7 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
               socket.write(JSON.stringify(update) + "\n");
             });
             triggerServer.each(function(socket) {
-              socket.write(JSON.stringify({"update": [index]}));
+              socket.write(JSON.stringify({"update": [index]}) + "\n");
             });
           }
         });
