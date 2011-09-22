@@ -91,7 +91,6 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
           res.setEncoding('utf8');
           res.on('data', function(d) {
             streamLocations[channel] = jquery.trim(d);
-            logger.debug(d);
           });
         }).on('error', function(e) {
           logger.error(e.message);
