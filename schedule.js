@@ -43,8 +43,11 @@ function extractTitle(event) {
 
 function extractDate(event) {
   var r = /(.*?) \| (.*?) - (.*?)\n/;
-  var d = Date.parse(r(event)[1]);
-  return { 'day': r(event)[1], 'start': r(event)[2], 'end': r(event)[3]};
+  var dateRegex = r(event);
+  if ((dateRegex != null) && (dateRegex.length == 4)) {
+    return { 'day': r(event)[1], 'start': r(event)[2], 'end': r(event)[3]};
+  }
+  return { 'day': '', 'start': '', 'end': '' };
 }
 
 exports.startServer = function() {
