@@ -19,6 +19,8 @@ global.MAX_BUFFER_SIZE = 1024;
 var NUMBER_OF_CHANNELS = 3;
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": "", "rating": "", "votes": ""} });
+var streamLocations = new Array(NUMBER_OF_CHANNELS);
+streamLocations = jquery.map(streamLocations, function(v) { return "undefined" });
 
 var legacyServer = pushServer.createPushServer(LEGACY_PUSH_PORT, function(server) {
   var str = "";
@@ -81,6 +83,29 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
   })();
 })();
 
+(function() {
+  function queryStreamLocation() {
+    for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
+      var request = function(channel) {
+        http.get({ host: 'radio.intergalacticfm.com', path: '/' + (i+1) + '.m3u'}, function(res) {
+          res.setEncoding('utf8');
+          res.on('data', function(d) {
+            streamLocations[channel] = jquery.trim(d);
+            logger.debug(d);
+          });
+        }).on('error', function(e) {
+          logger.error(e.message);
+        });
+      }
+      request(i);
+    }
+  }
+  
+  queryStreamLocation();
+  setInterval(function() {
+    queryStreamLocation();
+    }, 1000 * 60 * 10);
+})();
 
 (function() {
   var fileServer = new(static.Server)('./www');
@@ -102,6 +127,8 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
       } else {
         res.end(JSON.stringify(trackInfos));
       }
+    } else if (path == '/streamlocations') {
+      sendAsJSON(res, streamLocations);
     } else if (path == '/stats/live') {
       var text = "open connections: " + legacyServer.getConnections() + "\n\n";
       var index = 0;
