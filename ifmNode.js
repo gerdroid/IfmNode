@@ -16,7 +16,7 @@ global.TRIGGER_PORT = 8143;
 global.POLL_INTERVAL = 20000;
 global.MAX_BUFFER_SIZE = 1024;
 
-var NUMBER_OF_CHANNELS = 3;
+var NUMBER_OF_CHANNELS = 4;
 var trackInfos = new Array(NUMBER_OF_CHANNELS);
 trackInfos = jquery.map(trackInfos, function(v) { return { "path": "", "track": "", "label": "", "rating": "", "votes": ""} });
 var streamLocations = new Array(NUMBER_OF_CHANNELS);
