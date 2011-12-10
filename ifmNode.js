@@ -36,35 +36,23 @@ var legacyServer = pushServer.createPushServer(LEGACY_PUSH_PORT, function(server
 var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
 
 (function() {
-  function queryIfm(channel, callback) {
-    https.get({ host: 'intergalactic.fm', path: '/blackhole/homepage.php?channel=' + (channel+1)}, function(res) {
+  function queryAll() {
+    https.get({ host: 'intergalactic.fm', path: '/blackhole/newhomepage.php?format=json'}, function(res) {
       res.setEncoding('utf8');
       res.on('data', function(d) {
-        var path = /.*img src="(.*?)".*/(d)[1];
-        var track = /.*<div id="track-info-trackname">\s*<.*?>(.*?)<\/a>.*/(d)[1];
-        var label = /.*<div id="track-info-label">(.*?)<\/div>.*/(d)[1];
-        var rating = 0;
-        var numberOfRatings = 0;
-        if (d.search(/not yet rated.*/) == -1) {
-          ratingInfo = /.*rating: (.*?)<\/form>.*/(d)[1];
-          rating = /(.*?)\/.*/(ratingInfo)[1];
-          numberOfRatings = /.*\((.*) votes\).*/(ratingInfo)[1];
-        }
-        var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
-        callback(channel, info);
-      });
-    }).on('error', function(e) {
-      logger.error(e.message);
-    });
-  }
-    
-  (function monitorChannels() {
-    function queryAll() {
-      for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
-        queryIfm(i, function(index, info) {
-          if (info.track != trackInfos[index].track) {
-            trackInfos[index] = info;
-            var update = { "channel": index, "infos": info };
+        var allChannels = JSON.parse(d);
+        for (var i=0; i<NUMBER_OF_CHANNELS; i++) {
+          var channel = allChannels[(i+1).toString()];
+          var path = "/data/covers/" + channel.coverart;
+          var track = channel.artist + " - " + channel.track;
+          var label = channel.label;
+          var rating = 0;
+          var numberOfRatings = 0;
+          var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
+          logger.info("------>" + JSON.stringify(info));
+          if (info.track != trackInfos[i].track) {
+            trackInfos[i] = info;
+            var update = { "channel": i, "infos": info };
             legacyServer.each(function(socket) {
               socket.write(JSON.stringify(update) + "\n");
             });
@@ -72,15 +60,17 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
               socket.write(JSON.stringify({"update": [index]}) + "\n");
             });
           }
-        });
-      }
-    }
+        } 
+      });
+    }).on('error', function(e) {
+      logger.error(e.message);
+    });
+  }
 
+  queryAll();
+  setInterval(function() {
     queryAll();
-    setInterval(function() {
-      queryAll();
-    }, POLL_INTERVAL);
-  })();
+  }, POLL_INTERVAL);
 })();
 
 (function() {
@@ -162,6 +152,6 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
   }
 })();
 
-ifmSchedule.startServer();
+//ifmSchedule.startServer();
 logger.info("server started...accept conections");
 
