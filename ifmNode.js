@@ -49,15 +49,15 @@ var triggerServer = pushServer.createPushServer(TRIGGER_PORT);
           var rating = 0;
           var numberOfRatings = 0;
           var info =  { "path": path , "track": track, "label": label, "rating": rating, "votes": numberOfRatings};
-          logger.info("------>" + JSON.stringify(info));
           if (info.track != trackInfos[i].track) {
+            logger.info("------>" + JSON.stringify(info));
             trackInfos[i] = info;
             var update = { "channel": i, "infos": info };
             legacyServer.each(function(socket) {
               socket.write(JSON.stringify(update) + "\n");
             });
             triggerServer.each(function(socket) {
-              socket.write(JSON.stringify({"update": [index]}) + "\n");
+              socket.write(JSON.stringify({"update": [i]}) + "\n");
             });
           }
         } 
